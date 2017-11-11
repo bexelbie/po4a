@@ -17,8 +17,6 @@ my @AsciiDocTests = qw(Titles BlockTitles BlockId Paragraphs
 DelimitedBlocks Lists Footnotes Callouts Comments Tables Attributes StyleMacro);
 
 foreach my $AsciiDocTest (@AsciiDocTests) {
-    # Tables are currently badly supported.
-    next if $AsciiDocTest =~ m/Tables/;
     push @tests, {
         'run' => "perl ../../po4a-normalize -f asciidoc ../data-30/$AsciiDocTest.asciidoc >$AsciiDocTest.err 2>&1".
 	         "&& mv po4a-normalize.po $AsciiDocTest.po ".
@@ -54,7 +52,7 @@ push @tests, {
     'doc' => "translate titles with latin1 encoding",
     'requires' => "Unicode::GCString"
 };
-use Test::More tests => 2 * 15;
+use Test::More tests => 2 * 16;
 
 chdir "t/tmp" || die "Can't chdir to my test directory";
 

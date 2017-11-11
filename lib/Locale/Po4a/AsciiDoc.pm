@@ -325,7 +325,6 @@ sub parse {
                  ($paragraph =~ m/^[^\n]*\n$/s) and
                  # subtract one because chars includes the newline on the paragraph
                  ((chars($paragraph, $self->{TT}{po_in}{encoder}, $ref) - 1) == (length($line)))) {
-
             # Found title
             $wrapped_mode = 0;
             my $level = $line;
@@ -548,16 +547,22 @@ sub parse {
             my $macrotarget = $3;
             my $macroparam = $4;
             # Found a macro
-            if ($macrotype eq '::') {
-                do_paragraph($self,$paragraph,$wrapped_mode);
-                $paragraph="";
-                $wrapped_mode = 1;
-                undef $self->{bullet};
-                undef $self->{indent};
+
+            # Don't process include macros in tables, pass them through
+            if (($macroname eq "include") and ($macrotype eq '::') and (defined($self->{type}) and ($self->{type} eq "Table"))) {
+                $paragraph .= $line."\n";
+            } else {
+                if ($macrotype eq '::') {
+                    do_paragraph($self,$paragraph,$wrapped_mode);
+                    $paragraph="";
+                    $wrapped_mode = 1;
+                    undef $self->{bullet};
+                    undef $self->{indent};
+                }
+                my $t = $self->parse_macro($macroname, $macrotype, $macrotarget, $macroparam);
+                $self->pushline("$t\n");
+                @comments=();
             }
-            my $t = $self->parse_macro($macroname, $macrotype, $macrotarget, $macroparam);
-            $self->pushline("$t\n");
-            @comments=();
         } elsif (not defined $self->{verbatim} and
                  ($line !~ m/^\.\./) and ($line =~ m/^\.(\S.*)$/)) {
             my $title = $1;
@@ -592,8 +597,9 @@ sub parse {
             $paragraph = $text."\n";
             $self->{indent} = "";
             $self->{bullet} = $bullet;
-        } elsif ($line =~ /^\s*$/) {
+        } elsif (($line =~ /^\s*$/) and (!defined($self->{type}) or ($self->{type} ne "Table"))) {
             # Break paragraphs on empty lines or lines containing only spaces
+            # Except when we are in a table
 	    print STDERR "Empty new line. Wrap: ".(defined($self->{verbatim})?"yes. ":"no. ")."\n"
 		if $debug{parse};
             do_paragraph($self,$paragraph,$wrapped_mode);
@@ -645,6 +651,23 @@ sub parse {
             do_paragraph($self,$paragraph,$wrapped_mode);
             $paragraph="";
             $wrapped_mode = 1;
+        } elsif ($line =~ /^\|===/) {
+            # This is a table, treat it as a non-wrapped paragraph
+            # Do not save table delimeters
+            # TODO: Consider whether this should really try to deconstruct it by cell
+            if (($paragraph eq "") or (defined($self->{type}) and ($self->{type} =~ /^delimited block/i))) {
+                # Start the table
+                $wrapped_mode = 0;
+                $self->{type} = "Table";
+                $paragraph .= $line."\n";
+            } else {
+                $paragraph .= $line."\n";
+                do_paragraph($self,$paragraph,$wrapped_mode);
+                undef $self->{verbatim};
+                undef $self->{type};
+                $wrapped_mode = 1;
+                $paragraph="";
+            }
         } else {
 	    # A stupid paragraph of text
 	    print STDERR "Regular line. ".
