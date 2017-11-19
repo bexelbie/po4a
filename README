@@ -24,6 +24,7 @@ module for the following formats:
   - wml: WML documents.
   - xhtml: XHTML documents.
   - xml: generic XML documents (see also docbook).
+  - yaml: YAML documents.
 
 INSTALLATION
 
