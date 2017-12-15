@@ -82,6 +82,12 @@ TEXT MODULE SPECIFIC DEPENDENCIES
     http://hatuka.nezumi.nu/repos/Unicode-LineBreak/
 
 
+YAML MODULE SPECIFIC DEPENDENCIES
+
+  YAML::Tiny:
+    This module is used to parse and serialize the YAML file.
+
+
 PROJECT HOSTING
 
 The po4a project is hosted mainly on alioth:

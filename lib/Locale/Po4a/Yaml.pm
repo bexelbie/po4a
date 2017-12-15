@@ -14,6 +14,7 @@ use Locale::Po4a::TransTractor;
 use Locale::Po4a::Common;
 use YAML::Tiny;
 use Scalar::Util;
+use Encode;
 
 use 5.006;
 use strict;
@@ -65,7 +66,7 @@ sub parse_file {
     for my $i (0 .. $#{$yaml}) {
         &walk_yaml($self, $yaml->[$i]);
     }
-    $self->pushline($yaml->write_string());
+    $self->pushline(Encode::decode_utf8($yaml->write_string()));
 }
 
 sub walk_yaml {
